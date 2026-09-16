@@ -40,3 +40,15 @@ class CueCreate(CueBase):
 
 class CueUpdate(CueBase):
     pass
+
+
+class RehearsalStart(BaseModel):
+    name: str | None = Field(None, max_length=120, description="排演名称，留空按时间命名")
+
+    @field_validator("name")
+    @classmethod
+    def _strip(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        return v or None

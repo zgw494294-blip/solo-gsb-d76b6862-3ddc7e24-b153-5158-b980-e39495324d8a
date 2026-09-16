@@ -33,6 +33,47 @@ CREATE TABLE IF NOT EXISTS dependencies (
 
 CREATE INDEX IF NOT EXISTS idx_dep_cue ON dependencies(cue_id);
 CREATE INDEX IF NOT EXISTS idx_dep_on  ON dependencies(depends_on);
+
+-- ---------------------------------------------------------- 排演执行台
+-- 一场排演 = 开演时刻冻结的一份提示单快照，与后续提示单编辑完全隔离
+CREATE TABLE IF NOT EXISTS rehearsals (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','ended')),
+    start_epoch REAL NOT NULL,          -- 开演的 Unix 时间戳（秒）
+    end_epoch   REAL,                   -- 结束时刻；NULL = 进行中
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS rehearsal_cues (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    rehearsal_id  INTEGER NOT NULL REFERENCES rehearsals(id) ON DELETE CASCADE,
+    cue_id        INTEGER NOT NULL,     -- 快照时的源提示 id（仅用于追溯）
+    department    TEXT NOT NULL,
+    name          TEXT NOT NULL,
+    duration      REAL NOT NULL,
+    locked_start  REAL,
+    sort_order    INTEGER NOT NULL DEFAULT 0,
+    planned_start REAL,                 -- 冻结的计划开始（相对秒）
+    planned_end   REAL,                 -- 冻结的计划结束（相对秒）
+    status        TEXT NOT NULL DEFAULT 'waiting'
+                  CHECK(status IN ('waiting','executing','completed')),
+    actual_start  REAL,                 -- 实际开始：相对本场起点的秒数
+    actual_end    REAL,                 -- 实际完成：相对本场起点的秒数
+    UNIQUE(rehearsal_id, cue_id)
+);
+
+CREATE TABLE IF NOT EXISTS rehearsal_deps (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    rehearsal_id  INTEGER NOT NULL REFERENCES rehearsals(id) ON DELETE CASCADE,
+    cue_id        INTEGER NOT NULL,
+    depends_on    INTEGER NOT NULL,
+    delay         REAL NOT NULL DEFAULT 0,
+    UNIQUE(rehearsal_id, cue_id, depends_on)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rc_rehearsal ON rehearsal_cues(rehearsal_id);
+CREATE INDEX IF NOT EXISTS idx_rd_rehearsal ON rehearsal_deps(rehearsal_id);
 """
 
 

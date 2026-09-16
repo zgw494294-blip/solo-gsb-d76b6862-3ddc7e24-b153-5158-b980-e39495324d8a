@@ -13,9 +13,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import database
+from . import database, rehearsal
 from .scheduler import CueNode, CyclicDependencyError, build_schedule, detect_cycle
-from .schemas import CueCreate, CueUpdate
+from .schemas import CueCreate, CueUpdate, RehearsalStart
 
 app = FastAPI(title="舞台排演提示单", version="1.0.0")
 
@@ -174,6 +174,44 @@ def _cycle_handler(request, exc: CyclicDependencyError):
         status_code=409,
         content={"detail": str(exc), "cycle": exc.cycle_ids},
     )
+
+
+# ---------------------------------------------------------------- 排演执行台
+
+@app.post("/api/rehearsals", status_code=201)
+def start_rehearsal(payload: RehearsalStart | None = None) -> dict:
+    """开始一场排演：冻结当前提示单 / 依赖 / 计划时间为快照。
+    已有进行中的排演时返回 409。"""
+    with database.db() as conn:
+        return rehearsal.start_rehearsal(conn, payload.name if payload else None)
+
+
+@app.get("/api/rehearsals/current")
+def current_rehearsal() -> dict:
+    """当前排演（进行中优先，否则最近一场）及实时执行状态。"""
+    with database.db() as conn:
+        return {"rehearsal": rehearsal.get_current(conn)}
+
+
+@app.post("/api/rehearsals/{rid}/cues/{cue_id}/start")
+def rehearsal_cue_start(rid: int, cue_id: int) -> dict:
+    """开始执行某提示：记录相对本场起点的秒数；未就绪 / 状态非法返回 409。"""
+    with database.db() as conn:
+        return rehearsal.start_cue(conn, rid, cue_id)
+
+
+@app.post("/api/rehearsals/{rid}/cues/{cue_id}/complete")
+def rehearsal_cue_complete(rid: int, cue_id: int) -> dict:
+    """完成某提示：记录相对本场起点的秒数；非执行中返回 409。"""
+    with database.db() as conn:
+        return rehearsal.complete_cue(conn, rid, cue_id)
+
+
+@app.post("/api/rehearsals/{rid}/end")
+def end_rehearsal(rid: int) -> dict:
+    """结束本场排演；已结束时返回 409。"""
+    with database.db() as conn:
+        return rehearsal.end_rehearsal(conn, rid)
 
 
 # ---------------------------------------------------------------- 静态页面

@@ -339,6 +339,85 @@ input:focus { outline: none; border-color: var(--accent); }
 
 .hidden { display: none !important; }
 
+/* --------------------------------------------------------------- 排演执行台 */
+.rehearsal-error { margin: 12px 16px 0; }
+.rehearsal-body { padding: 14px 16px; }
+.rehearsal-empty p { color: var(--text-dim); margin: 2px 0 12px; max-width: 720px; }
+.rehearsal-start-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.rehearsal-start-row input {
+  flex: 1 1 260px;
+  max-width: 420px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+}
+.rehearsal-again { margin-top: 14px; }
+
+.rehearsal-head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.rehearsal-title { display: flex; align-items: baseline; gap: 10px; }
+.rehearsal-clock { display: flex; align-items: baseline; gap: 8px; margin-left: auto; }
+.clock-label { color: var(--text-dim); font-size: 12px; }
+.clock {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+.badge { padding: 3px 12px; border-radius: 20px; font-size: 12px; }
+.badge-active {
+  color: var(--ok);
+  border: 1px solid rgba(76,175,125,.5);
+  background: rgba(76,175,125,.12);
+}
+.badge-ended {
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+}
+
+.st {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.st-waiting { color: var(--text-dim); background: rgba(154,167,189,.12); }
+.st-ready {
+  color: #9fc4ff;
+  background: rgba(122,165,255,.16);
+  border: 1px solid rgba(122,165,255,.45);
+}
+.st-executing {
+  color: var(--accent-2);
+  background: rgba(232,163,61,.14);
+  border: 1px solid rgba(232,163,61,.5);
+  animation: st-pulse 1.2s ease-in-out infinite;
+}
+.st-completed { color: var(--ok); background: rgba(76,175,125,.14); }
+@keyframes st-pulse { 50% { opacity: .55; } }
+.st-sub { color: var(--text-dim); font-size: 11px; margin-top: 3px; }
+
+.rehearsal-table td.num, .rehearsal-table th { font-variant-numeric: tabular-nums; }
+.rehearsal-table td.num { white-space: nowrap; }
+tr.st-row-executing { background: rgba(232,163,61,.05); }
+.dev-pos { color: var(--chain); }
+.dev-neg { color: var(--ok); }
+button.sm { padding: 4px 12px; font-size: 12px; }
+button:disabled { opacity: .4; cursor: not-allowed; }
+button:disabled:hover { border-color: var(--border); }
+
 /* --------------------------------------------------------------- 响应式 */
 @media (max-width: 760px) {
   :root { --label-w: 190px; }
