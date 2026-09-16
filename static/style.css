@@ -76,6 +76,17 @@ button.primary {
 }
 button.primary:hover { background: var(--accent-2); }
 button.ghost { background: transparent; }
+.nav-link {
+  display: inline-block;
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  background: var(--panel-2);
+}
+.nav-link:hover { border-color: var(--accent); }
 button.danger-ghost { color: var(--danger); border-color: rgba(239,93,93,.4); background: transparent; }
 button.danger-ghost:hover { background: var(--danger-bg); }
 

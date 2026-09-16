@@ -40,3 +40,7 @@ class CueCreate(CueBase):
 
 class CueUpdate(CueBase):
     pass
+
+
+class RunStart(BaseModel):
+    note: str = Field("", max_length=200, description="本场备注（可选）")

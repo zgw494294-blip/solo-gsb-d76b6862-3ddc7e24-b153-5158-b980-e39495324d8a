@@ -33,6 +33,55 @@ CREATE TABLE IF NOT EXISTS dependencies (
 
 CREATE INDEX IF NOT EXISTS idx_dep_cue ON dependencies(cue_id);
 CREATE INDEX IF NOT EXISTS idx_dep_on  ON dependencies(depends_on);
+
+-- ------------------------------------------------------------ 排演执行台
+-- 一场排演（runs）。status: running=进行中，ended=已结束；
+-- 同一时刻最多一场 running（由应用层在事务内保证）。
+CREATE TABLE IF NOT EXISTS runs (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    status       TEXT NOT NULL DEFAULT 'running' CHECK(status IN ('running','ended')),
+    note         TEXT NOT NULL DEFAULT '',
+    origin_epoch REAL NOT NULL,          -- 本场起点（unix 秒，浮点）
+    started_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    ended_at     TEXT,
+    end_offset   REAL                    -- 结束时相对起点的秒数
+);
+
+-- 开场瞬间的提示快照（后续编辑提示单不影响已开始的场次）
+CREATE TABLE IF NOT EXISTS run_cues (
+    run_id       INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+    cue_id       INTEGER NOT NULL,      -- 原提示 id（快照内用它作为标识）
+    department   TEXT NOT NULL,
+    name         TEXT NOT NULL,
+    duration     REAL NOT NULL,
+    locked_start REAL,
+    sort_order   INTEGER NOT NULL DEFAULT 0,
+    -- 快照时冻结的计划时间
+    plan_start   REAL,
+    plan_end     REAL,
+    -- 执行记录（相对本场起点的秒数）；status: waiting/running/completed
+    status       TEXT NOT NULL DEFAULT 'waiting'
+                 CHECK(status IN ('waiting','running','completed')),
+    actual_start REAL,
+    actual_end   REAL,
+    PRIMARY KEY (run_id, cue_id)
+);
+
+-- 开场瞬间的依赖与延迟快照
+CREATE TABLE IF NOT EXISTS run_deps (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id     INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+    cue_id     INTEGER NOT NULL,      -- 后继（快照 id）
+    depends_on INTEGER NOT NULL,      -- 前置（快照 id）
+    delay      REAL NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_run_cues_run ON run_cues(run_id);
+CREATE INDEX IF NOT EXISTS idx_run_deps_run ON run_deps(run_id);
+
+-- 数据库级保证：同一时刻最多一场进行中的排演（部分唯一索引）
+CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_single_active
+    ON runs(status) WHERE status = 'running';
 """
 
 
